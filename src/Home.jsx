@@ -6,20 +6,30 @@ import { Modal, Button, Form } from "react-bootstrap";
 import Dropdown from "react-bootstrap/Dropdown";
 import NavDropdown from "react-bootstrap/NavDropdown";
 import { useNavigate } from "react-router-dom";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
+const ItemTypes = {
+  CARD: "card",
+};
 
 function Home() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [taskDetails, setTaskDetails] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
 
   useEffect(() => {
-    let fetchData = async () => {
+    const fetchData = async () => {
       try {
-        let task = await axios.get(`http://localhost:3005/home`);
-        setTaskDetails([...task.data]);
-        console.log(task.data);
+        const response = await axios.get(`http://localhost:3005/home`);
+        const tasks = response.data.map(task => ({
+          ...task,
+          status: task.status || "TODO"
+        }));
+        setTaskDetails(tasks);
+        console.log("Fetched tasks:", tasks);
       } catch (error) {
         console.log(error);
       }
@@ -82,14 +92,23 @@ function Home() {
     setCurrentTask({ ...currentTask, [name]: value });
   };
 
-  let handlelogout = () => {
+  const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
+  const moveCard = (id, status) => {
+    const updatedTasks = taskDetails.map((task) => {
+      if (task._id === id) {
+        return { ...task, status };
+      }
+      return task;
+    });
+    setTaskDetails(updatedTasks);
+  };
 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
       <div className="container-fluid">
         <div className="row">
           <nav className="navbar nav1">
@@ -100,11 +119,11 @@ function Home() {
               menuVariant="dark"
             >
               <Dropdown.Item className="" to="">
-                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                <i className="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                 <Link className="">My Profile</Link>
               </Dropdown.Item>
-              <Dropdown.Item className="" onClick={handlelogout}>
-                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+              <Dropdown.Item className="" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                 Logout
               </Dropdown.Item>
             </NavDropdown>
@@ -119,7 +138,7 @@ function Home() {
             </div>
           </div>
           <div className="row homenav2">
-            <div className="homenav2a">
+            <div className="">
               <div className="d-flex">
                 <h6 className="s1">Search :</h6>
                 <input className="s1" type="search" placeholder="Search..." />
@@ -133,179 +152,183 @@ function Home() {
             </div>
           </div>
           <div className="content d-flex">
-            <div className="col-lg-4 cls">
-              <div className="contenthd">
-                <h5
-                  style={{
-                    padding: "5px",
-                  }}
-                >
-                  TODO
-                </h5>
-              </div>
-
-              {taskDetails.map((task, index) => (
-                <div className="card mt-3" key={index}>
-                  <div className="card-body">
-                    <h6 className="">Task Name: {task.task}</h6>
-                    <h6 className="">Description:</h6>
-                    <p className="card-text">
-                      Created at: {task.date}
-                      <br />
-                    </p>
-                    <div style={{ paddingLeft: "100px" }}>
-                      <button
-                        className="btn btn-danger bts"
-                        onClick={() => handleDelete(task._id)}
-                      >
-                        Delete
-                      </button>
-                      <button
-                        className="btn btn-secondary bts"
-                        onClick={() => handleEditClick(task)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-primary bts"
-                        onClick={() => handleViewClick(task)}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Edit Task Modal */}
-              <Modal show={showEditModal} onHide={handleEditClose}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Edit Task</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  {currentTask && (
-                    <Form>
-                      <Form.Group controlId="formTaskTitle">
-                        <Form.Label>Task Name</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="task"
-                          value={currentTask.task}
-                          onChange={handleChange}
-                        />
-                      </Form.Group>
-                      <Form.Group controlId="formTaskDescription">
-                        <Form.Label>Description</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={3}
-                          name="description"
-                          value={currentTask.description}
-                          onChange={handleChange}
-                        />
-                      </Form.Group>
-                      <Form.Group controlId="formTaskDate">
-                        <Form.Label>Created Date</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="date"
-                          value={currentTask.date}
-                          onChange={handleChange}
-                        />
-                      </Form.Group>
-                    </Form>
-                  )}
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={handleEditClose}>
-                    Close
-                  </Button>
-                  <Button variant="primary" onClick={handleSave}>
-                    Save Changes
-                  </Button>
-                </Modal.Footer>
-              </Modal>
-
-              {/* View Task Modal */}
-              <Modal show={showViewModal} onHide={handleViewClose}>
-                <Modal.Header closeButton>
-                  <Modal.Title>View Task</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  {currentTask && (
-                    <div>
-                      <h6>Task Name: {currentTask.task}</h6>
-                      <p>Description: {currentTask.description}</p>
-                      <p>Created Date: {currentTask.date}</p>
-                    </div>
-                  )}
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={handleViewClose}>
-                    Close
-                  </Button>
-                </Modal.Footer>
-              </Modal>
-            </div>
-
-            <div className="col-lg-4 cls">
-              <div className="contenthd">
-                <h5
-                  style={{
-                    padding: "5px",
-                  }}
-                >
-                  IN PROCESS
-                </h5>
-              </div>
-              <div className="card">
-                <h6 className="card-header">Task1</h6>
-                <div className="card-body">
-                  <h6 className="card-title">Description</h6>
-                  <p className="card-text">created date , time </p>
-                  <div
-                    style={{
-                      paddingLeft: "100px",
-                    }}
-                  >
-                    <button className="btn btn-danger bts">Delete</button>
-                    <button className="btn btn-secondary bts">Edit</button>
-                    <button className="btn btn-primary bts">View Details</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-4 cls">
-              <div className="contenthd">
-                <h5
-                  style={{
-                    padding: "5px",
-                  }}
-                >
-                  COMPLETED
-                </h5>
-              </div>
-              <div className="card">
-                <h6 className="card-header">Task1</h6>
-                <div className="card-body">
-                  <h6 className="card-title">Description</h6>
-                  <p className="card-text">created date , time </p>
-                  <div
-                    style={{
-                      paddingLeft: "100px",
-                    }}
-                  >
-                    <button className="btn btn-danger bts">Delete</button>
-                    <button className="btn btn-secondary bts">Edit</button>
-                    <button className="btn btn-primary bts">View Details</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Column
+              title="TODO"
+              tasks={taskDetails.filter((task) => task.status === "TODO")}
+              moveCard={moveCard}
+              handleDelete={handleDelete}
+              handleEditClick={handleEditClick}
+              handleViewClick={handleViewClick}
+            />
+            <Column
+              title="IN PROCESS"
+              tasks={taskDetails.filter((task) => task.status === "IN PROCESS")}
+              moveCard={moveCard}
+              handleDelete={handleDelete}
+              handleEditClick={handleEditClick}
+              handleViewClick={handleViewClick}
+            />
+            <Column
+              title="COMPLETED"
+              tasks={taskDetails.filter((task) => task.status === "COMPLETED")}
+              moveCard={moveCard}
+              handleDelete={handleDelete}
+              handleEditClick={handleEditClick}
+              handleViewClick={handleViewClick}
+            />
           </div>
         </div>
       </div>
-    </>
+
+      {/* Edit Task Modal */}
+      <Modal show={showEditModal} onHide={handleEditClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Task</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {currentTask && (
+            <Form>
+              <Form.Group controlId="formTaskTitle">
+                <Form.Label>Task Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="task"
+                  value={currentTask.task}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+              <Form.Group controlId="formTaskDescription">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  name="description"
+                  value={currentTask.description}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+              <Form.Group controlId="formTaskDate">
+                <Form.Label>Created Date</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="date"
+                  value={currentTask.date}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Form>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleEditClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* View Task Modal */}
+      <Modal show={showViewModal} onHide={handleViewClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>View Task</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {currentTask && (
+            <div>
+              <h6>Task Name: {currentTask.task}</h6>
+              <p>Description: {currentTask.description}</p>
+              <p>Created Date: {currentTask.date}</p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleViewClose}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </DndProvider>
+  );
+}
+
+function Column({ title, tasks, moveCard, handleDelete, handleEditClick, handleViewClick }) {
+  const [, drop] = useDrop({
+    accept: ItemTypes.CARD,
+    drop: (item) => {
+      moveCard(item.id, title);
+    },
+  });
+
+  return (
+    <div className="col-lg-4 cls" ref={drop}>
+      <div className="contenthd">
+        <h5
+          style={{
+            padding: "5px",
+          }}
+        >
+          {title}
+        </h5>
+      </div>
+      {tasks.map((task) => (
+        <TaskCard
+          key={task._id}
+          task={task}
+          handleDelete={handleDelete}
+          handleEditClick={handleEditClick}
+          handleViewClick={handleViewClick}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TaskCard({ task, handleDelete, handleEditClick, handleViewClick }) {
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.CARD,
+    item: { id: task._id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  return (
+    <div
+      className="card"
+      ref={drag}
+      style={{ opacity: isDragging ? 0.5 : 1, marginBottom: "1rem" }}
+    >
+      <div className="card-body">
+        <h5 className="card-title">{task.task}</h5>
+        <p className="card-text">{task.description}</p>
+        <button
+          className="btn btn-primary" style={{
+            marginRight:"5px"
+          }}
+          onClick={() => handleEditClick(task)}
+        >
+          Edit
+        </button>
+        <button
+          className="btn btn-secondary" style={{
+            marginRight:"5px"
+          }}
+          onClick={() => handleViewClick(task)}
+        >
+          View
+        </button>
+        <button
+          className="btn btn-danger" style={{
+            marginRight:"5px"
+          }}
+          onClick={() => handleDelete(task._id)}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
   );
 }
 

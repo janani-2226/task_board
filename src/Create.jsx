@@ -12,6 +12,7 @@ function Create() {
     initialValues: {
       task: "",
       date: "",
+      description: "",
     },
     onSubmit: async (values) => {
       try {
@@ -106,7 +107,18 @@ function Create() {
                   value={formik.values.date}
                   onChange={formik.handleChange}
                 />
+                <div className="col-lg-6">
+                  <input
+                    className="form-control createin"
+                    placeholder="Description"
+                    name="description"
+                    value={formik.values.description}
+                    onChange={formik.handleChange}
+                  ></input>
+                </div>
+                
               </div>
+
               <div
                 style={{
                   paddingLeft: "85%",
