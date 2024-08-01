@@ -1,15 +1,18 @@
 .nav1 {
   background-color: rgb(56, 132, 224);
+  padding: 10px;
 }
 
 .logbt {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
+  
 }
 
 .bt {
   background-color: aliceblue;
+  margin-right: 10px;
 }
 
 .login {
@@ -48,14 +51,16 @@
   padding-left: 50px;
   padding-right: 50px;
 }
+.homenav2a{
+  display: flex;
+  justify-content: space-between;
+}
 
 .homenav2 {
   border: 2px rgb(120, 117, 117) solid;
   margin-left: 2px;
   margin-top: 20px;
   padding: 12px;
-  display: flex;
-  justify-content: space-between;
 }
 
 .s1 {

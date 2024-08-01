@@ -119,7 +119,7 @@ function Home() {
             </div>
           </div>
           <div className="row homenav2">
-            <div className="">
+            <div className="homenav2a">
               <div className="d-flex">
                 <h6 className="s1">Search :</h6>
                 <input className="s1" type="search" placeholder="Search..." />
